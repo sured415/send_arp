@@ -107,9 +107,10 @@ int main(int argc, char* argv[]) {
 			packet += sizeof(struct libnet_ethernet_hdr);
 			packet += sizeof(struct libnet_arp_hdr);
 			struct arpAddr* reply = (struct arpAddr *)packet;
-
-			for(int i=0; i<6; i++) end.tha[i] = reply->sha[i];
-			break;
+			if(strcmp((char*)req.sha, (char*)reply->tha) == 0){
+				for(int i=0; i<6; i++) end.tha[i] = reply->sha[i];
+				break;
+			}
 		}
 	}
 
