@@ -67,25 +67,12 @@ int main(int argc, char* argv[]) {
 	char* senderip = argv[2];
 	makearp(senderip, ARPOP_REQUEST);
 
-	printf("(si) Attacker Mac = ");
-        for (int i = 0; i < 6; ++i) printf("%02x ", req.sha[i]);
-	printf("\n");
-	printf("(si) Attacker ip = %02x %02x %02x %02x\n", req.spa[0],req.spa[1],req.spa[2],req.spa[3]);
-	printf("(tm) Target Mac = ");
-        for (int i = 0; i < 6; ++i) printf("%02x ", req.tha[i]);
-	printf("\n");
-	printf("(ti) Target ip = %02x %02x %02x %02x\n", req.tpa[0],req.tpa[1],req.tpa[2],req.tpa[3]);
-
 	char errbuf[PCAP_ERRBUF_SIZE];
 	pcap_t* handle = pcap_open_live(dev, BUFSIZ, 1, 1000, errbuf);
 	if (handle == NULL) {
 		fprintf(stderr, "couldn't open device %s: %s\n", dev, errbuf);
 		return -1;
 	}
-
-	printf("%d\n", sizeof(struct libnet_ethernet_hdr));
-	printf("%d\n", sizeof(struct libnet_arp_hdr));
-	printf("%d\n", sizeof(struct arpAddr));
 
 	u_int8_t size = sizeof(struct libnet_ethernet_hdr) + sizeof(struct libnet_arp_hdr) + sizeof(struct arpAddr);
 	u_int8_t arppacket[size];
@@ -120,8 +107,6 @@ int main(int argc, char* argv[]) {
 	makepacket(arppacket, end);
 
 	pcap_sendpacket(handle, arppacket, size);
-
-	for(int i=0; i<42; i++) printf("%02x ", arppacket[i]);
 
 	printf("\n");
 	return 0;
